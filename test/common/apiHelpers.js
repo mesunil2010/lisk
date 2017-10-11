@@ -48,8 +48,12 @@ function getMultisignaturesTransactions (cb) {
 	http.get('/api/transactions/multisignatures', httpCallbackHelper.bind(null, cb));
 }
 
-function getPendingMultisignature (transaction, cb) {
-	http.get('/api/multisignatures/pending?publicKey=' + transaction.senderPublicKey, httpCallbackHelper.bind(null, cb));
+function getPendingMultisignature (publicKey, cb) {
+	var url = '/api/multisignatures/pending';
+	if (publicKey) {
+		url += '?publicKey=' + publicKey;
+	}
+	http.get(url, httpCallbackHelper.bind(null, cb));
 }
 
 function sendTransaction (transaction, cb) {

@@ -45,7 +45,7 @@ function confirmationPhase (goodTransactions, badTransactions, pendingMultisigna
 		if (pendingMultisignatures) {
 			it('pendingMultisignatures should remain in the pending queue', function () {
 				return node.Promise.map(pendingMultisignatures, function (tx) {
-					return getPendingMultisignaturePromise(tx).then(function (res) {
+					return getPendingMultisignaturePromise(tx.senderPublicKey).then(function (res) {
 						node.expect(res).to.have.property('success').to.be.ok;
 						node.expect(res).to.have.property('transactions').to.be.an('array').to.have.lengthOf(1);
 					});
@@ -99,7 +99,7 @@ function confirmationPhase (goodTransactions, badTransactions, pendingMultisigna
 		if (pendingMultisignatures) {
 			it('pendingMultisignatures should remain in the pending queue', function () {
 				return node.Promise.map(pendingMultisignatures, function (tx) {
-					return getPendingMultisignaturePromise(tx).then(function (res) {
+					return getPendingMultisignaturePromise(tx.senderPublicKey).then(function (res) {
 						node.expect(res).to.have.property('success').to.be.ok;
 						node.expect(res).to.have.property('transactions').to.be.an('array').to.have.lengthOf(1);
 					});
@@ -205,9 +205,26 @@ function invalidAssets (account, option, badTransactions) {
 	});
 }
 
+function multisigScenario (size, amount) {
+	this.account = node.randomAccount();
+	this.members = new Array();
+	this.keysgroup = new Array();
+
+	var i, auxAccount;
+	for (i = 0; i < size - 1; i++) {
+		auxAccount = node.randomAccount();
+		this.members.push(auxAccount);
+		this.keysgroup.push('+' + auxAccount.publicKey);
+	}
+
+	this.tx = null;
+	this.amount = amount || 100000000000;
+}
+
 module.exports = {
 	tests: tests,
 	confirmationPhase: confirmationPhase,
 	invalidTxs: invalidTxs,
-	invalidAssets: invalidAssets
+	invalidAssets: invalidAssets,
+	multisigScenario: multisigScenario
 };
