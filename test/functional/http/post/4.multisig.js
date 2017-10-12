@@ -13,12 +13,12 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 
 	var scenarios = {
 		'no_funds': new shared.multisigScenario(3, 0),
-		'scarce_funds': new shared.multisigScenario(3, constants.fees.multisignature * 3),
+		'minimal_funds': new shared.multisigScenario(3, constants.fees.multisignature * 3),
 		'minimum_not_reached': new shared.multisigScenario(4), //4_2
 		'regular': new shared.multisigScenario(3), //3_2
 		'max_signatures': new shared.multisigScenario(16), //16_2
 		'max_signatures_max_min': new shared.multisigScenario(16), //16_16
-		'more_than_max_signatures': new shared.multisigScenario(18), //18_2
+		'more_than_max_signatures': new shared.multisigScenario(17), //17_2
 	};
 
 	var transaction, signature;
@@ -48,16 +48,6 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 
 		shared.invalidAssets(scenarios.regular.account, 'multisignature', badTransactions);
 
-		it('using empty keysgroup should fail', function () {
-			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, [], 1, 2);
-
-			return sendTransactionPromise(transaction).then(function (res) {
-				node.expect(res).to.have.property('success').to.be.not.ok;
-				node.expect(res).to.have.property('message').to.equal('Invalid transaction body - Failed to validate multisignature schema: Array is too short (0), minimum 1');
-				badTransactions.push(transaction);
-			});
-		});
-
 		it('using sender in the keysgroup should fail', function () {
 			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, ['+' + node.eAccount.publicKey, '+' + scenarios.regular.account.publicKey], 1, 2);
 
@@ -69,7 +59,7 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 		});
 
 		it('using no math operator in keysgroup should fail', function () {
-			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, [node.eAccount.publicKey, scenarios.no_funds.account.publicKey, scenarios.scarce_funds.account.publicKey], 1, 2);
+			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, [node.eAccount.publicKey, scenarios.no_funds.account.publicKey, scenarios.minimal_funds.account.publicKey], 1, 2);
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.not.ok;
@@ -108,24 +98,22 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 			});
 		});
 
-		// TODO: bug in 1.0.0 waiting for backport 0.9.7
-		it.skip('using empty member in keysgroup should fail', function () {
-			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, ['+' + node.eAccount.publicKey, '+' + scenarios.no_funds.account.publicKey, '+' + scenarios.scarce_funds.account.publicKey, null], 1, 2);
+		it('using empty member in keysgroup should fail', function () {
+			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, ['+' + node.eAccount.publicKey, '+' + scenarios.no_funds.account.publicKey, '+' + scenarios.minimal_funds.account.publicKey, null], 1, 2);
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.not.ok;
-				node.expect(res).to.have.property('message').to.equal('Invalid math operator in multisignature keysgroup');
+				node.expect(res).to.have.property('message').to.equal('Invalid member in keysgroup');
 				badTransactions.push(transaction);
 			});
 		});
 
-		// TODO: change sentence 'Must be less than or equal to keysgroup size + 1'
 		it('using min bigger than keysgroup size plus 1 should fail', function () {
 			transaction = node.lisk.multisignature.createMultisignature(scenarios.regular.account.password, null, [node.eAccount.publicKey], 1, 2);
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.not.ok;
-				node.expect(res).to.have.property('message').to.equal('Invalid multisignature min. Must be less than keysgroup size');
+				node.expect(res).to.have.property('message').to.equal('Invalid multisignature min. Must be less than or equal to keysgroup size');
 				badTransactions.push(transaction);
 			});
 		});
@@ -140,13 +128,12 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 			});
 		});
 
-		// TODO: Error message change : Must be between 2 and 16
-		it('using min less than minimum(2) should fail', function () {
-			transaction = node.lisk.multisignature.createMultisignature(scenarios.max_signatures.account.password, null, scenarios.max_signatures.keysgroup, 1, 1);
+		it('using min less than minimum(1) should fail', function () {
+			transaction = node.lisk.multisignature.createMultisignature(scenarios.max_signatures.account.password, null, scenarios.max_signatures.keysgroup, 1, 0);
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.not.ok;
-				node.expect(res).to.have.property('message').to.equal('Invalid multisignature min. Must be between 1 and 16');
+				node.expect(res).to.have.property('message').to.equal('Invalid transaction body - Failed to validate multisignature schema: Value 0 is less than minimum 1');
 				badTransactions.push(transaction);
 			});
 		});
@@ -164,13 +151,13 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 			});
 		});
 
-		it('with scarce_funds scenario should be ok', function () {
-			transaction = node.lisk.multisignature.createMultisignature(scenarios.scarce_funds.account.password, null, scenarios.scarce_funds.keysgroup, 1, 2);
+		it('with minimal_funds scenario should be ok', function () {
+			transaction = node.lisk.multisignature.createMultisignature(scenarios.minimal_funds.account.password, null, scenarios.minimal_funds.keysgroup, 1, 2);
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.ok;
 				node.expect(res).to.have.property('transactionId').to.equal(transaction.id);
-				scenarios.scarce_funds.tx = transaction;
+				scenarios.minimal_funds.tx = transaction;
 			});
 		});
 
@@ -214,12 +201,12 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 			});
 		});
 
-		it('using more_than_max_signatures scenario (18,2) should fail', function () {
+		it('using more_than_max_signatures scenario (17,2) should fail', function () {
 			transaction = node.lisk.multisignature.createMultisignature(scenarios.more_than_max_signatures.account.password, null, scenarios.more_than_max_signatures.keysgroup, 1, 2);
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.not.ok;
-				node.expect(res).to.have.property('message').to.equal('Invalid transaction body - Failed to validate multisignature schema: Array is too long (17), maximum 16');
+				node.expect(res).to.have.property('message').to.equal('Invalid transaction body - Failed to validate multisignature schema: Array is too long (16), maximum 15');
 				badTransactions.push(transaction);
 			});
 		});
@@ -296,19 +283,6 @@ describe('POST /api/transactions (type 4) register multisignature', function () 
 				})).then(function (res) {
 					goodTransactions.push(scenarios.max_signatures_max_min.tx);
 				});
-			});
-		});
-
-		// TODO: remove after patch 0.9.8
-		it.skip('with 20 signs 2 min BUGG', function () {
-			return node.Promise.all(node.Promise.map(scenarios.more_than_max_signatures.members, function (member) {
-				signature = node.lisk.multisignature.signTransaction(scenarios.more_than_max_signatures.tx, member.password);
-
-				return sendSignaturePromise(signature, scenarios.more_than_max_signatures.tx).then(function (res) {
-					node.expect(res).to.have.property('success').to.be.ok;
-				});
-			})).then(function (res) {
-				goodTransactions.push(scenarios.more_than_max_signatures.tx);
 			});
 		});
 	});
