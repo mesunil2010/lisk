@@ -27,7 +27,7 @@ describe('POST /api/transactions (type 2) register delegate', function () {
 	before(function () {
 
 		var promises = [];
-		promises.push(creditAccountPromise(account.address, 100000000000));
+		promises.push(creditAccountPromise(account.address, 1000 * node.normalizer ));
 		promises.push(creditAccountPromise(accountMinimalFunds.address, constants.fees.delegate));
 		promises.push(creditAccountPromise(accountUpperCase.address, constants.fees.delegate));
 		promises.push(creditAccountPromise(accountFormerDelegate.address, constants.fees.delegate));
@@ -123,51 +123,6 @@ describe('POST /api/transactions (type 2) register delegate', function () {
 				node.expect(res).to.have.property('success').to.be.ok;
 				node.expect(res).to.have.property('transactionId').to.equal(transaction.id);
 				goodTransactions.push(transaction);
-			});
-		});
-	});
-
-	describe('unconfirmed state', function () {
-
-		describe('using same account', function () {
-
-			describe('using same username', function () {
-
-				describe('with the same id', function () {
-
-					it('first transaction should be ok');
-
-					it('second transaction should fail');	
-				});	
-
-				describe('with different timestamp', function () {
-
-					it('first transaction should be ok');
-
-					it('second transaction should fail');	
-				});
-			});
-
-			describe('with different usernames', function () {
-
-				it('should not confirm one transaction');
-
-				it('should confirm one transaction');
-			});
-		});
-
-		describe('using two different accounts', function () {
-		
-			describe('using same username', function () {
-			
-				it('should not confirm one transaction');
-				
-				it('should confirm one transaction');
-			});
-
-			describe('using different usernames', function () {
-				
-				it('should successfully confirm both transactions');
 			});
 		});
 	});
