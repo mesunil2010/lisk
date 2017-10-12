@@ -16,7 +16,7 @@ describe('GET /api/multisignatures/', function () {
 
 	before(function () {
 		//Crediting accounts
-		return creditAccountPromise(scenario.account.address, 100000000000).then(function (res) {
+		return creditAccountPromise(scenario.account.address, 1000 * node.normalizer).then(function (res) {
 			node.expect(res).to.have.property('success').to.be.ok;
 			node.expect(res).to.have.property('transactionId').that.is.not.empty;
 		})
@@ -39,6 +39,14 @@ describe('GET /api/multisignatures/', function () {
 			return getPendingMultisignaturePromise(null).then(function (res) {
 				node.expect(res).to.have.property('success').to.be.not.ok;
 				node.expect(res).to.have.property('error').to.equal('Missing required property: publicKey');
+			});
+		});
+
+		it('using emptyspace public key should be ok', function () {
+			return getPendingMultisignaturePromise(' ').then(function (res) {
+				node.expect(res).to.have.property('success').to.be.ok;
+				node.expect(res).to.have.property('transactions').that.is.an('array');
+				node.expect(res.transactions).to.be.lengthOf(0);
 			});
 		});
 
