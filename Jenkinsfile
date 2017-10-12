@@ -259,7 +259,16 @@ lock(resource: "Lisk-Core-Nodes", inversePrecedence: true) {
 					npm run ${params.JENKINS_PROFILE}
 					"""
 				}
-			}, // End node-01 functional tests
+			}, 
+			"Functional POST tx type 3" : {
+				node('node-01'){
+					sh """
+					export TEST=test/functional/http/post/3.votes.js TEST_TYPE='FUNC' NODE_ENV='TEST'
+					cd "\$(echo ${env.WORKSPACE} | cut -f 1 -d '@')"
+					npm run ${params.JENKINS_PROFILE}
+					"""
+				}
+			}, // End node-01 functional tests// End node-01 functional tests
 			"Functional Peers" : {
 				node('node-02'){
 					sh """
